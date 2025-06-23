@@ -1,54 +1,28 @@
 "use client";
-import Image from "next/image";
-import React from "react";
-import { Logout } from "../../../public/icons/icons";
 
-interface User {
-  name: string;
-  role: string;
-  avatarUrl: string;
-}
-
-const getCurrentDate = () => {
-  const date = new Date();
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  }).format(date);
-};
-
-const Header: React.FC<{ user: User }> = ({ user }) => {
-  const firstName = user.name.split(" ")[0];
-
+export const Header = () => {
   return (
-    <div className="flex justify-between items-center px-4 mb-4">
-      {/* Left - Greeting */}
-      <div>
-        <p className="text-sm text-gray-500">{getCurrentDate()}</p>
-        <h1 className="text-3xl font-bold mt-1">Good Evening, {firstName}</h1>
-      </div>
-
-      {/* Right - User Profile */}
-      <div className="flex items-center gap-4 shadow border rounded-xl p-3 justify-between min-w-[250px]"
-        style={{ borderWidth: 2, borderStyle: "dashed", borderColor: "#e5e7eb" }}
-      >
-        <Image
-          src={user.avatarUrl || "/images/avatar.png"}
-          alt="User Avatar"
-          width={40}
-          height={40}
-          className="rounded-full bg-slate-400 w-12 h-12 object-cover"
-        />
-        <div className="flex flex-col">
-          <p className="font-semibold leading-none text-sm">{user.name}</p>
-          <p className="text-xs text-gray-500">{user.role}</p>
+    <header className="p-6 pb-0">
+      <div className="bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] rounded-xl p-6 text-white mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">
+              Welcome to TrustLockd Admin
+            </h1>
+            <p className="text-white/90">
+              Monitor and manage your multi-vendor platform with confidence
+            </p>
+          </div>
+          <div className="hidden md:block">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                <span className="text-[#20d5c7] font-bold text-lg">TL</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <button className="text-gray-400 hover:text-black transition">
-         <Logout/>
-        </button>
       </div>
-    </div>
+    </header>
   );
 };
 
