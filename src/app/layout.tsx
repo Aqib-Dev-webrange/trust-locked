@@ -31,7 +31,7 @@ export default function RootLayout({
           </div>
           
           {/* Main Content Area */}
-          <div className="flex-1 ml-72">
+          <div className="flex-1 lg:ml-72">
             {/* Header */}
             <Header />
             {/* Page Content */}
