@@ -26,16 +26,16 @@ export default function RootLayout({
       <body className={`${fontPoppins.className} antialiased text-black bg-gray-50`}>
         <div className="flex min-h-screen">
           {/* Fixed Sidebar */}
-          <div className="fixed top-0 left-0 h-full w-80 z-50 bg-white shadow-lg">
+          <div className="fixed top-0 left-0 h-full w-80 z-50 ">
             <Sidebar />
           </div>
           
           {/* Main Content Area */}
-          <div className="flex-1 ml-80">
+          <div className="flex-1 ml-72">
             {/* Header */}
             <Header />
             {/* Page Content */}
-            <main className="px-6 pb-6">
+            <main className="px-4 pb-6">
               {children}
             </main>
           </div>

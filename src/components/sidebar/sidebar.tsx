@@ -11,15 +11,15 @@ export default function Sidebar() {
   const handleClick = (label: string) => setActive(label);
 
   return (
-    <aside className="absolute w-80 h-screen bg-[#1a2332] text-white p-6 rounded-[20px] space-y-2 border border-[#2a3441]">
+    <aside className="absolute w-72 h-screen bg-[#081420] text-white p-6 rounded-r-[20px] space-y-2   shadow-lg">
       {/* Logo */}
-      <div className="flex justify-center items-center text-4xl font-bold rounded-xl mb-10 mt-2 mx-auto w-[190px] h-[86px] bg-gradient-to-br from-[#20d5c7] to-[#1bb5a7] p-4">
+      <div className="flex justify-center items-center text-4xl font-bold">
         <Image 
           src={IMAGES.logo}
           alt="Logo"
-          width={100}
-          height={100}
-          className="w-20 h-20 object-cover"
+          width={800}
+          height={800}
+          className="w-36 h-36 object-cover"
         />
       </div>
 

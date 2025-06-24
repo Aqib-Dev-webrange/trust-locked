@@ -2,7 +2,7 @@
 
 export const Header = () => {
   return (
-    <header className="p-6 pb-0">
+    <header className="p-4 pb-0">
       <div className="bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] rounded-xl p-6 text-white mb-6">
         <div className="flex items-center justify-between">
           <div>
