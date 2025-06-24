@@ -148,7 +148,7 @@ const mockDisputes: Dispute[] = [
 export default function DisputesSystem() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterPriority, setFilterPriority] = useState("all");
+  // const [filterPriority, setFilterPriority] = useState("all");
   const [disputes, setDisputes] = useState(mockDisputes);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
@@ -175,9 +175,9 @@ export default function DisputesSystem() {
       dispute.vendor.name.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = filterStatus === "all" || dispute.status === filterStatus;
-    const matchesPriority = filterPriority === "all" || dispute.priority === filterPriority;
+    // const matchesPriority = filterPriority === "all" || dispute.priority === filterPriority;
     
-    return matchesSearch && matchesStatus && matchesPriority;
+    return matchesSearch && matchesStatus ;
   });
 
   const handleStatusChange = (
@@ -255,14 +255,14 @@ export default function DisputesSystem() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high": return "bg-red-100 text-red-800";
-      case "medium": return "bg-yellow-100 text-yellow-800";
-      case "low": return "bg-green-100 text-green-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
+  // const getPriorityColor = (priority: string) => {
+  //   switch (priority) {
+  //     case "high": return "bg-red-100 text-red-800";
+  //     case "medium": return "bg-yellow-100 text-yellow-800";
+  //     case "low": return "bg-green-100 text-green-800";
+  //     default: return "bg-gray-100 text-gray-800";
+  //   }
+  // };
 
   return (
     <div className="p-6 bg-white rounded-xl shadow-sm">
@@ -358,7 +358,7 @@ export default function DisputesSystem() {
           </select>
         </div>
 
-        <select
+        {/* <select
           value={filterPriority}
           onChange={(e) => setFilterPriority(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
@@ -367,7 +367,7 @@ export default function DisputesSystem() {
           <option value="high">High</option>
           <option value="medium">Medium</option>
           <option value="low">Low</option>
-        </select>
+        </select> */}
       </div>
 
       {/* Disputes Table */}
@@ -381,7 +381,7 @@ export default function DisputesSystem() {
               <th className="text-left p-4 font-semibold text-gray-900">Vendor</th>
               <th className="text-left p-4 font-semibold text-gray-900">Amount</th>
               <th className="text-left p-4 font-semibold text-gray-900">Status</th>
-              <th className="text-left p-4 font-semibold text-gray-900">Priority</th>
+              {/* <th className="text-left p-4 font-semibold text-gray-900">Priority</th> */}
               <th className="text-left p-4 font-semibold text-gray-900">Date</th>
               <th className="text-left p-4 font-semibold text-gray-900">Actions</th>
             </tr>
@@ -443,11 +443,11 @@ export default function DisputesSystem() {
                 </td>
 
                 {/* Priority */}
-                <td className="p-4">
+                {/* <td className="p-4">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(dispute.priority)}`}>
                     {dispute.priority.charAt(0).toUpperCase() + dispute.priority.slice(1)}
                   </span>
-                </td>
+                </td> */}
 
                 {/* Date */}
                 <td className="p-4">
