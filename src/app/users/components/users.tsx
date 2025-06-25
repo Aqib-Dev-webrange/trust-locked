@@ -1,218 +1,124 @@
 "use client";
-import { useState } from "react";
-import { FiSearch, FiFilter, FiMessageCircle, FiEdit, FiTrash2, FiUser, FiCheck, FiX, FiSend } from "react-icons/fi";
+import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from "react";
+import { FaChevronLeft } from "react-icons/fa";
+import { FiSearch, FiMessageCircle,  FiTrash2, FiUser, FiCheck, FiX, FiSend, FiFilter } from "react-icons/fi";
 
-// Mock user data - replace with actual API data
-const mockUsers: User[] = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    avatar: "/avatars/user1.jpg",
-    status: "active",
-    unreadMessages: 3,
-    role: "Customer",
-    joinedDate: "2024-01-15",
-    Verified: "Yes",
-    location: "New York, USA",
-    phone: "+1 234 567 8901"
-  },
-  {
-    id: 2,
-    name: "Sarah Wilson",
-    email: "sarah.wilson@example.com",
-    avatar: "/avatars/user2.jpg",
-    status: "inactive",
-    unreadMessages: 0,
-    role: "Vendor",
-    joinedDate: "2023-12-20",
-    Verified: "No",
-    location: "London, UK",
-    phone: "+44 123 456 789"
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    email: "mike.johnson@example.com",
-    avatar: "/avatars/user3.jpg",
-    status: "active",
-    lastSeen: "Online now",
-    unreadMessages: 1,
-    role: "Customer",
-    joinedDate: "2024-02-10",
-    Verified: "Yes",
-    location: "Toronto, Canada",
-    phone: "+1 416 555 0123"
-  },
-  {
-    id: 4,
-    name: "Emma Davis",
-    email: "emma.davis@example.com",
-    avatar: "/avatars/user4.jpg",
-    status: "active",
-    lastSeen: "5 minutes ago",
-    unreadMessages: 0,
-    role: "Vendor",
-    joinedDate: "2023-11-05",
-    Verified: "No",
-    location: "Sydney, Australia",
-    phone: "+61 2 1234 5678"
-  },
-  {
-    id: 5,
-    name: "David Brown",
-    email: "david.brown@example.com",
-    avatar: "/avatars/user5.jpg",
-    status: "inactive",
-    lastSeen: "3 days ago",
-    unreadMessages: 2,
-    role: "Customer",
-    joinedDate: "2024-03-01",
-    Verified: "No",
-    location: "Berlin, Germany",
-    phone: "+49 30 12345678"
-  },
-  {
-    id: 6,
-    name: "Olivia Smith",
-    email: "olivia.smith@example.com",
-    avatar: "/avatars/user6.jpg",
-    status: "active",
-    unreadMessages: 5,
-    role: "Customer",
-    joinedDate: "2024-02-20",
-    Verified: "Yes",
-    location: "San Francisco, USA",
-    phone: "+1 415 555 0123"
-  },
-  {
-    id: 7,
-    name: "James Wilson",
-    email: "james.wilson@example.com",
-    avatar: "/avatars/user7.jpg",
-    status: "inactive",
-    unreadMessages: 2,
-    role: "Vendor",
-    joinedDate: "2024-01-10",
-    Verified: "No",
-    location: "Los Angeles, USA",
-    phone: "+1 310 555 0123"
-  }
-];
-
+// User type matches your Supabase table
 type User = {
-  id: number;
-  name: string;
-  email: string;
-  avatar: string;
-  status: "active" | "inactive";
-  unreadMessages: number;
-  role: string;
-  joinedDate: string;
-  Verified: "Yes" | "No";
-  location: string;
-  phone: string;
-  lastSeen?: string;
+  uid: string;
+  email: string | null;
+  created_at: string;
+  last_sign_in_at: string | null;
+  display_name: string | null;
+  stripeUserId: string | null;
+  connectId: string | null;
+  ratings: number | null;
+  isConnectAccVerified: boolean | null;
+  isDocumentSubmitted: boolean | null;
 };
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [users, setUsers] = useState<User[]>(mockUsers);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Modal states (edit, chat, delete)
+  // const [showEditModal, setShowEditModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [editForm, setEditForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    location: "",
-    role: ""
-  });
+  const [verifiedFilter, setVerifiedFilter] = useState<'all' | 'verified' | 'unverified'>('all');
+const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_submitted'>('all');
+  // const [editForm, setEditForm] = useState({
+  //   display_name: "",
+  //   email: "",
+  // });
   const [chatMessage, setChatMessage] = useState("");
-  type ChatMessage = {
-    id: number;
-    sender: "user" | "admin";
-    message: string;
-    time: string;
-  };
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatMessages, setChatMessages] = useState<{ id: number; sender: "user" | "admin"; message: string; time: string }[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 10; // Change this to show more/less per page
 
-  // Filter users based on search and status
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "all" || user.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const { data } = await supabase.from("users").select("*");
+      if (data) setUsers(data);
+      setLoading(false);
+    };
+    fetchUsers();
+  }, []);
 
-  const handleVerificationToggle = (userId: number) => {
-    setUsers(prevUsers => 
-      prevUsers.map(user => 
-        user.id === userId 
-          ? { ...user, Verified: user.Verified === "Yes" ? "No" : "Yes" }
-          : user
-      )
-    );
-  };
+  // Filter by display_name or email
+  const filteredUsers = users.filter((user) => {
+  const matchesSearch =
+    (user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+    (user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
 
-  const handleStatusToggle = (userId: number) => {
-    setUsers(prevUsers => 
-      prevUsers.map(user => 
-        user.id === userId 
-          ? { ...user, status: user.status === "active" ? "inactive" : "active" }
-          : user
-      )
-    );
-  };
+  const matchesVerified =
+    verifiedFilter === 'all' ||
+    (verifiedFilter === 'verified' && user.isConnectAccVerified) ||
+    (verifiedFilter === 'unverified' && !user.isConnectAccVerified);
 
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user);
-    setEditForm({
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      location: user.location,
-      role: user.role
-    });
-    setShowEditModal(true);
-  };
+  const matchesDocument =
+    documentFilter === 'all' ||
+    (documentFilter === 'submitted' && user.isDocumentSubmitted) ||
+    (documentFilter === 'not_submitted' && !user.isDocumentSubmitted);
 
-  const handleSaveEdit = () => {
-    if (!selectedUser) return;
-    setUsers(prevUsers => 
-      prevUsers.map(user => 
-        user.id === selectedUser.id 
-          ? { ...user, ...editForm }
-          : user
-      )
-    );
-    setShowEditModal(false);
-    setSelectedUser(null);
-  };
+  return matchesSearch && matchesVerified && matchesDocument;
+});
 
+  // Edit modal logic
+  // const handleEditUser = (user: User) => {
+  //   setSelectedUser(user);
+  //   setEditForm({
+  //     display_name: user.display_name ?? "",
+  //     email: user.email ?? "",
+  //   });
+  //   setShowEditModal(true);
+  // };
+
+  // Save edit (local only, add Supabase update if needed)
+  // const handleSaveEdit = () => {
+  //   if (!selectedUser) return;
+  //   setUsers((prev) =>
+  //     prev.map((u) =>
+  //       u.uid === selectedUser.uid
+  //         ? { ...u, display_name: editForm.display_name, email: editForm.email }
+  //         : u
+  //     )
+  //   );
+  //   setShowEditModal(false);
+  //   setSelectedUser(null);
+  // };
+
+  // Chat modal logic
   const handleChatClick = (user: User) => {
     setSelectedUser(user);
     setChatMessages([
-      { id: 1, sender: "user", message: "Hello, I need help with my order", time: "10:30 AM" },
-      { id: 2, sender: "admin", message: "Hi! I'd be happy to help you. What's your order number?", time: "10:32 AM" }
+      { id: 1, sender: "user", message: "Hello, I need help!", time: "10:30 AM" },
+      { id: 2, sender: "admin", message: "Hi! How can I help you?", time: "10:32 AM" },
+      { id: 3, sender: "user", message: "I have a question about my account.", time: "10:33 AM" },
+      { id: 4, sender: "admin", message: "Sure! Please go ahead.", time: "10:34 AM" },
     ]);
     setShowChatModal(true);
   };
 
   const handleSendMessage = () => {
     if (chatMessage.trim()) {
-      const newMessage: ChatMessage = {
-        id: chatMessages.length + 1,
-        sender: "admin",
-        message: chatMessage,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setChatMessages([...chatMessages, newMessage]);
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          sender: "admin",
+          message: chatMessage,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
       setChatMessage("");
     }
   };
 
+  // Delete modal logic
   const handleDeleteUser = (user: User) => {
     setSelectedUser(user);
     setShowDeleteModal(true);
@@ -220,52 +126,93 @@ export default function Users() {
 
   const confirmDelete = () => {
     if (!selectedUser) return;
-    setUsers(prevUsers => prevUsers.filter(user => user.id !== selectedUser.id));
+    setUsers((prev) => prev.filter((u) => u.uid !== selectedUser.uid));
     setShowDeleteModal(false);
     setSelectedUser(null);
   };
+
+  // Pagination logic
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+
+  if (loading) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+      <svg
+        className="animate-spin h-20 w-20 text-[#20d5c7] mb-4"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+        />
+      </svg>
+      <span className="text-[#20d5c7] text-lg font-medium animate-pulse">Processing ..</span>
+    </div>
+  );
+}
 
   return (
     <div className="p-6 bg-white rounded-xl shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Users Management</h1>
+          <h1 className="text-2xl font-medium text-gray-900">Users Management</h1>
           <p className="text-gray-600">Manage all registered users and their status</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">
-            {filteredUsers.length} users found
-          </span>
-        </div>
+          <span className="text-sm text-gray-500">{filteredUsers.length} users found</span>
+        </div> 
       </div>
 
-      {/* Search and Filter Bar */}
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-4 flex-1">
-          <div className="relative flex-1 max-w-md">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search users by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
-            />
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <FiFilter className="text-gray-400 w-5 h-5" />
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+      {/* Search Bar */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="relative flex-1 max-w-md">
+          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search users by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <FiFilter className="text-gray-400 w-5 h-5" />
+          <select
+            value={verifiedFilter}
+            onChange={(e) => setVerifiedFilter(e.target.value as 'all' | 'verified' | 'unverified')}
+            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
+          >
+            <option value="all">All Users</option>
+            <option value="verified">Verified</option>
+            <option value="unverified">Unverified</option>
+          </select>
+          <select
+            value={documentFilter}
+            onChange={(e) => setDocumentFilter(e.target.value as 'all' | 'submitted' | 'not_submitted')}
+            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
+          >
+            <option value="all">All Documents</option>
+            <option value="submitted">Submitted</option>
+            <option value="not_submitted">Not Submitted</option>
+          </select>
         </div>
       </div>
 
@@ -274,87 +221,40 @@ export default function Users() {
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-gray-200">
-              <th className="text-left p-4 font-semibold text-gray-900">User</th>
-              <th className="text-left p-4 font-semibold text-gray-900">Contact</th>
-              <th className="text-left p-4 font-semibold text-gray-900">Status</th>
+              <th className="text-left p-4 font-semibold text-gray-900">Full Name</th>
+              <th className="text-left p-4 font-semibold text-gray-900">Email</th>
+              <th className="text-left p-4 font-semibold text-gray-900">Date</th>
               <th className="text-left p-4 font-semibold text-gray-900">Verified</th>
-              {/* <th className="text-left p-4 font-semibold text-gray-900">Messages</th> */}
+              <th className="text-left p-4 font-semibold text-gray-900">Document</th>
+              <th className="text-left p-4 font-semibold text-gray-900">Ratings</th>
               <th className="text-left p-4 font-semibold text-gray-900">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
-                {/* User Info */}
+            {currentUsers.map((user) => (
+              <tr key={user.uid} className="border-b border-gray-100 hover:bg-gray-50">
+                <td className="p-4">{user.display_name ?? <span className="text-gray-400">N/A</span>}</td>
+                <td className="p-4">{user.email ?? <span className="text-gray-400">N/A</span>}</td>
+                <td className="p-4">{new Date(user.created_at).toLocaleDateString()}</td>
                 <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#20d5c7] to-[#1bb5a7] rounded-full flex items-center justify-center text-white font-medium">
-                      {user.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{user.name}</div>
-                      <div className="text-sm text-gray-600">{user.location}</div>
-                    </div>
-                  </div>
+                  {user.isConnectAccVerified ? (
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                      <FiCheck className="w-3 h-3" /> Verified
+                    </span>
+                  ) : (
+                    <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                      <FiX className="w-3 h-3" /> Not Verified
+                    </span>
+                  )}
                 </td>
-
-                {/* Contact */}
                 <td className="p-4">
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-900">{user.email}</div>
-                    <div className="text-sm text-gray-600">{user.phone}</div>
-                  </div>
+                  {user.isDocumentSubmitted ? (
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Submitted</span>
+                  ) : (
+                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Not Submitted</span>
+                  )}
                 </td>
-
-                {/* Status */}
-                <td className="p-4">
-                  <button
-                    onClick={() => handleStatusToggle(user.id)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      user.status === 'active'
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-red-100 text-red-800 hover:bg-red-200'
-                    }`}
-                  >
-                    {user.status === 'active' ? 'Active' : 'Inactive'}
-                  </button>
-                </td>
-
-                {/* Verified */}
-                <td className="p-4">
-                  <button
-                    onClick={() => handleVerificationToggle(user.id)}
-                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      user.Verified === 'Yes'
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                    }`}
-                  >
-                    {user.Verified === 'Yes' ? (
-                      <>
-                        <FiCheck className="w-3 h-3" />
-                        Verified
-                      </>
-                    ) : (
-                      <>
-                        <FiX className="w-3 h-3" />
-                        Unverified
-                      </>
-                    )}
-                  </button>
-                </td>
-
-                {/* Messages */}
-                {/* <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-900">{user.unreadMessages}</span>
-                    {user.unreadMessages > 0 && (
-                      <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                    )}
-                  </div>
-                </td> */}
-
-                {/* Actions */}
+                <td className="p-4">{user.ratings ?? <span className="text-gray-400">N/A</span>}</td>
                 <td className="p-4">
                   <div className="flex items-center gap-2">
                     <button
@@ -364,15 +264,13 @@ export default function Users() {
                     >
                       <FiMessageCircle className="w-4 h-4" />
                     </button>
-                    
-                    <button
+                    {/* <button
                       onClick={() => handleEditUser(user)}
                       className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                       title="Edit user"
                     >
                       <FiEdit className="w-4 h-4 text-gray-600" />
-                    </button>
-                    
+                    </button> */}
                     <button
                       onClick={() => handleDeleteUser(user)}
                       className="p-2 border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors"
@@ -389,17 +287,17 @@ export default function Users() {
       </div>
 
       {/* Edit Modal */}
-      {showEditModal && (
+      {/* {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Edit User</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
                 <input
                   type="text"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                  value={editForm.display_name}
+                  onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
                 />
               </div>
@@ -408,25 +306,7 @@ export default function Users() {
                 <input
                   type="email"
                   value={editForm.email}
-                  onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input
-                  type="text"
-                  value={editForm.phone}
-                  onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <input
-                  type="text"
-                  value={editForm.location}
-                  onChange={(e) => setEditForm({...editForm, location: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
                 />
               </div>
@@ -447,7 +327,7 @@ export default function Users() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Chat Modal */}
       {showChatModal && (
@@ -455,10 +335,10 @@ export default function Users() {
           <div className="bg-white rounded-xl w-full max-w-lg h-96 flex flex-col">
             <div className="p-4 border-b border-gray-200 flex items-center gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-[#20d5c7] to-[#1bb5a7] rounded-full flex items-center justify-center text-white font-medium text-sm">
-                {selectedUser?.name.split(' ').map(n => n[0]).join('')}
+                {selectedUser?.display_name?.split(" ").map((n) => n[0]).join("")}
               </div>
               <div>
-                <div className="font-medium text-gray-900">{selectedUser?.name}</div>
+                <div className="font-medium text-gray-900">{selectedUser?.display_name}</div>
                 <div className="text-sm text-gray-600">Online</div>
               </div>
               <button
@@ -468,31 +348,35 @@ export default function Users() {
                 <FiX className="w-4 h-4" />
               </button>
             </div>
-            
             <div className="flex-1 p-4 overflow-y-auto space-y-3">
               {chatMessages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-xs px-3 py-2 rounded-lg ${
-                    msg.sender === 'admin' 
-                      ? 'bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] text-white' 
-                      : 'bg-gray-100 text-gray-900'
-                  }`}>
+                <div key={msg.id} className={`flex ${msg.sender === "admin" ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className={`max-w-xs px-3 py-2 rounded-lg ${
+                      msg.sender === "admin"
+                        ? "bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] text-white"
+                        : "bg-gray-100 text-gray-900"
+                    }`}
+                  >
                     <div className="text-sm">{msg.message}</div>
-                    <div className={`text-xs mt-1 ${msg.sender === 'admin' ? 'text-white/70' : 'text-gray-500'}`}>
+                    <div
+                      className={`text-xs mt-1 ${
+                        msg.sender === "admin" ? "text-white/70" : "text-gray-500"
+                      }`}
+                    >
                       {msg.time}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            
             <div className="p-4 border-t border-gray-200">
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   placeholder="Type your message..."
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
                 />
@@ -514,7 +398,7 @@ export default function Users() {
           <div className="bg-white rounded-xl p-6 w-full max-w-sm">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Delete User</h2>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete <strong>{selectedUser?.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong>{selectedUser?.display_name}</strong>? This action cannot be undone.
             </p>
             <div className="flex items-center gap-3">
               <button
@@ -534,6 +418,38 @@ export default function Users() {
         </div>
       )}
 
+      {/* Pagination */}
+      <div className="flex items-center justify-between mt-6">
+        <div className="text-sm text-gray-500">
+          Showing{" "}
+          {filteredUsers.length === 0
+            ? "0"
+            : `${indexOfFirstUser + 1}-${Math.min(indexOfLastUser, filteredUsers.length)} of ${filteredUsers.length}`}
+          {" "}users
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-[#20d5c7] text-white rounded-lg disabled:bg-gray-300 transition-all duration-300 hover:bg-[#1bb5a7] hover:to-[#179a8e] disabled:hover:to-gray-300 disabled:hover:bg-gray-200"
+          >
+            {/* add left arrow */}
+            <FaChevronLeft className="mr-1" />
+          </button>
+          <span className="px-4 py-2 bg-[#20d5c7] text-white rounded-lg">
+            {currentPage} 
+          </span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-[#20d5c7] text-white rounded-lg disabled:bg-gray-300 transition-all duration-300 hover:bg-[#1bb5a7] hover:to-[#179a8e] "
+          >
+            {/* add right arrow */}
+            <FaChevronLeft className="transform rotate-180 ml-1" />
+          </button>
+        </div>
+      </div>
+
       {/* Empty State */}
       {filteredUsers.length === 0 && (
         <div className="text-center py-12">
@@ -544,24 +460,6 @@ export default function Users() {
           <p className="text-gray-600">Try adjusting your search or filter criteria.</p>
         </div>
       )}
-
-      {/* Table Footer */}
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-        <div className="text-sm text-gray-600">
-          Showing {filteredUsers.length} of {users.length} users
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
-            Previous
-          </button>
-          <button className="px-3 py-1 bg-[#20d5c7] text-white rounded-lg text-sm hover:bg-[#1bb5a7]">
-            1
-          </button>
-          <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
-            Next
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
