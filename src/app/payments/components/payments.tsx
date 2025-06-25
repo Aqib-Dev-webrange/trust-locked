@@ -80,16 +80,12 @@ export default function PaymentsSystem() {
   const filteredPayments = payments.filter((payment) => {
     const matchesSearch =
       payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.owner.display_name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      payment.purchaser.display_name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      payment.owner.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.purchaser.display_name.toLowerCase().includes(searchTerm.toLowerCase());
 
+    const mappedStatus = mapStatusToFrontend(payment.status);
     const matchesStatus =
-      filterStatus === "all" ||
-      payment.status.toLowerCase() === filterStatus.toLowerCase();
+      filterStatus === "all" || mappedStatus === filterStatus;
 
     return matchesSearch && matchesStatus;
   });
@@ -171,6 +167,23 @@ export default function PaymentsSystem() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  function mapStatusToFrontend(status: string) {
+    switch (status) {
+      case OrderStatus.Offer:
+      case OrderStatus.AwaitingReceived:
+        return "pending";
+      case OrderStatus.PaymentConfirmed:
+      case OrderStatus.Shipped:
+        return "inprogress";
+      case OrderStatus.Completed:
+        return "completed";
+      case OrderStatus.Cancelled:
+        return "completed"; // or "cancelled" if you want to show it separately
+      default:
+        return status.toLowerCase();
+    }
   }
 
   if (loading) {
@@ -296,20 +309,9 @@ export default function PaymentsSystem() {
             className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
           >
             <option value="all">All Status</option>
-            <option value={OrderStatus.Offer}>{OrderStatus.Offer}</option>
-            <option value={OrderStatus.PaymentConfirmed}>
-              {OrderStatus.PaymentConfirmed}
-            </option>
-            <option value={OrderStatus.Shipped}>{OrderStatus.Shipped}</option>
-            <option value={OrderStatus.AwaitingReceived}>
-              {OrderStatus.AwaitingReceived}
-            </option>
-            <option value={OrderStatus.Completed}>
-              {OrderStatus.Completed}
-            </option>
-            <option value={OrderStatus.Cancelled}>
-              {OrderStatus.Cancelled}
-            </option>
+            <option value="pending">Pending</option>
+            <option value="inprogress">In Progress</option>
+            <option value="completed">Completed</option>
           </select>
         </div>
       </div>
@@ -367,7 +369,7 @@ export default function PaymentsSystem() {
                 </td>
                 <td className="p-4">
                   <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                    {payment.status}
+                    {mapStatusToFrontend(payment.status)}
                   </span>
                 </td>
                 <td className="p-4 text-sm text-gray-600">

@@ -5,7 +5,7 @@ import {
   FiAlertTriangle, 
   FiCreditCard 
 } from "react-icons/fi";
-import { Dashboard } from "../../../public/icons/icons";
+// import { Dashboard } from "../../../public/icons/icons";
 
 export type SidebarDataItem = {
   type: "item";
@@ -33,13 +33,13 @@ export type SidebarDataItem = {
 };
 
 export const sidebarData: SidebarDataItem[] = [
-  {
-    type: "item",
-    label: "Dashboard",
-    icon: <Dashboard className="w-5 h-5" />,
-    link: "/",
+  // {
+  //   type: "item",
+  //   label: "Dashboard",
+  //   icon: <Dashboard className="w-5 h-5" />,
+  //   link: "/",
     
-  },
+  // },
   {
     type: "item",
     label: "User Management",
