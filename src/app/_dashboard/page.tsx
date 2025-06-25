@@ -1,23 +1,121 @@
-import { statusData } from "@/utils/data/statusData";
-import StatusCard from "./components/statusCard";
-import { 
-  FiTrendingUp, 
-  FiUsers, 
-  FiShoppingBag, 
+"use client";
+import React, { useEffect, useState } from "react";
+import {
+  FiTrendingUp,
+  FiUsers,
   FiDollarSign,
+  FiCreditCard,
+  FiStar,
+  FiShoppingBag,
   FiMessageCircle,
   FiAlertCircle,
-  FiCreditCard,
-  FiStar
 } from "react-icons/fi";
+import StatusCard from "./components/statusCard";
+
+// Dummy fetch functions
+function fetchRevenueStats() {
+  return Promise.resolve({
+    today: 2847,
+    week: 18920,
+    month: 78450,
+    percent: 12.5,
+    progress: 75,
+  });
+}
+function fetchRecentActivities() {
+  return Promise.resolve([
+    {
+      icon: <FiShoppingBag className="w-4 h-4 text-green-600" />,
+      bg: "bg-green-100",
+      text: "New order received",
+      timeAgo: "2 minutes ago",
+    },
+    {
+      icon: <FiUsers className="w-4 h-4 text-blue-600" />,
+      bg: "bg-blue-100",
+      text: "New vendor registered",
+      timeAgo: "15 minutes ago",
+    },
+    {
+      icon: <FiAlertCircle className="w-4 h-4 text-yellow-600" />,
+      bg: "bg-yellow-100",
+      text: "Payment dispute opened",
+      timeAgo: "1 hour ago",
+    },
+    {
+      icon: <FiMessageCircle className="w-4 h-4 text-purple-600" />,
+      bg: "bg-purple-100",
+      text: "New support ticket",
+      timeAgo: "2 hours ago",
+    },
+  ]);
+}
+function fetchPlatformMetrics() {
+  return Promise.resolve({
+    paymentSuccess: { value: 98.5, change: 8.2 },
+    avgRating: { value: 4.8, change: 0.3 },
+    retention: { value: 89.2, change: 15.7 },
+  });
+}
+
+// Example: Replace statusData with dynamic data
+const statusData = [
+  {
+    label: "Total Orders",
+    count: 50, // fetched from backend
+    color: "green",
+  },
+  {
+    label: "Total Users",
+    count: 100, // fetched from backend
+    color: "blue",
+  },
+  {
+    label: "Vendors",
+    count: 25 , // fetched from backend
+    color: "purple",
+  },
+  {
+    label: "Disputes",
+    count: 5, // fetched from backend
+    color: "yellow",
+  },
+  {
+    label: "Support Tickets",
+    count: 10, // fetched from backend
+    color: "red",
+  },
+];
 
 export default function Dashboard() {
-  
+  // Revenue
+  const [revenue, setRevenue] = useState({
+    today: 0,
+    week: 0,
+    month: 0,
+    percent: 0,
+    progress: 0,
+  });
+  // Activities
+  const [activities, setActivities] = useState<
+    { icon: React.ReactNode; bg: string; text: string; timeAgo: string }[]
+  >([]);
+  // Metrics
+  const [metrics, setMetrics] = useState({
+    paymentSuccess: { value: 0, change: 0 },
+    avgRating: { value: 0, change: 0 },
+    retention: { value: 0, change: 0 },
+  });
+
+  useEffect(() => {
+    // Fetch all dashboard data
+    fetchRevenueStats().then(setRevenue);
+    fetchRecentActivities().then(setActivities);
+    fetchPlatformMetrics().then(setMetrics);
+  }, []);
+
   return (
     <div className="flex flex-col gap-6">
-      {/* Welcome Header with TrustLockd Branding */}
-      
-
       {/* Status Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {statusData.map((item, index) => (
@@ -36,27 +134,38 @@ export default function Dashboard() {
         {/* Revenue Chart Card */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Revenue Overview</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Revenue Overview
+            </h3>
             <div className="flex items-center gap-2 text-[#20d5c7]">
               <FiTrendingUp className="w-5 h-5" />
-              <span className="text-sm font-medium">+12.5%</span>
+              <span className="text-sm font-medium">+{revenue.percent}%</span>
             </div>
           </div>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Today</span>
-              <span className="font-semibold text-gray-900">$2,847.00</span>
+              <span className="font-semibold text-gray-900">
+                ${revenue.today.toLocaleString()}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-600">This Week</span>
-              <span className="font-semibold text-gray-900">$18,920.00</span>
+              <span className="font-semibold text-gray-900">
+                ${revenue.week.toLocaleString()}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-600">This Month</span>
-              <span className="font-semibold text-gray-900">$78,450.00</span>
+              <span className="font-semibold text-gray-900">
+                ${revenue.month.toLocaleString()}
+              </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] h-2 rounded-full" style={{ width: '75%' }}></div>
+              <div
+                className="bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] h-2 rounded-full"
+                style={{ width: `${revenue.progress}%` }}
+              ></div>
             </div>
           </div>
         </div>
@@ -64,48 +173,27 @@ export default function Dashboard() {
         {/* Recent Activities */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Activities</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Recent Activities
+            </h3>
             <button className="text-[#20d5c7] text-sm font-medium hover:text-[#1bb5a7]">
               View All
             </button>
           </div>
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <FiShoppingBag className="w-4 h-4 text-green-600" />
+            {activities.map((activity, idx) => (
+              <div key={idx} className="flex items-center gap-3">
+                <div
+                  className={`w-8 h-8 ${activity.bg} rounded-full flex items-center justify-center`}
+                >
+                  {activity.icon}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-900">{activity.text}</p>
+                  <p className="text-xs text-gray-500">{activity.timeAgo}</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">New order received</p>
-                <p className="text-xs text-gray-500">2 minutes ago</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <FiUsers className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">New vendor registered</p>
-                <p className="text-xs text-gray-500">15 minutes ago</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                <FiAlertCircle className="w-4 h-4 text-yellow-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">Payment dispute opened</p>
-                <p className="text-xs text-gray-500">1 hour ago</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <FiMessageCircle className="w-4 h-4 text-purple-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">New support ticket</p>
-                <p className="text-xs text-gray-500">2 hours ago</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
@@ -117,9 +205,13 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-gradient-to-br from-[#20d5c7] to-[#1bb5a7] rounded-lg flex items-center justify-center">
               <FiCreditCard className="w-6 h-6 text-white" />
             </div>
-            <span className="text-sm text-green-600 font-medium">+8.2%</span>
+            <span className="text-sm text-green-600 font-medium">
+              +{metrics.paymentSuccess.change}%
+            </span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">98.5%</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            {metrics.paymentSuccess.value}%
+          </h3>
           <p className="text-gray-600 text-sm">Payment Success Rate</p>
         </div>
 
@@ -128,9 +220,13 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-gradient-to-br from-[#20d5c7] to-[#1bb5a7] rounded-lg flex items-center justify-center">
               <FiStar className="w-6 h-6 text-white" />
             </div>
-            <span className="text-sm text-green-600 font-medium">+0.3</span>
+            <span className="text-sm text-green-600 font-medium">
+              +{metrics.avgRating.change}
+            </span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">4.8</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            {metrics.avgRating.value}
+          </h3>
           <p className="text-gray-600 text-sm">Average Rating</p>
         </div>
 
@@ -139,9 +235,13 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-gradient-to-br from-[#20d5c7] to-[#1bb5a7] rounded-lg flex items-center justify-center">
               <FiUsers className="w-6 h-6 text-white" />
             </div>
-            <span className="text-sm text-green-600 font-medium">+15.7%</span>
+            <span className="text-sm text-green-600 font-medium">
+              +{metrics.retention.change}%
+            </span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">89.2%</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            {metrics.retention.value}%
+          </h3>
           <p className="text-gray-600 text-sm">Customer Retention</p>
         </div>
       </div>
@@ -153,11 +253,15 @@ export default function Dashboard() {
             <span className="text-white font-bold">TL</span>
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">TrustLockd Platform Health</h3>
-            <p className="text-gray-600 text-sm">Real-time platform security and trust metrics</p>
+            <h3 className="text-lg font-semibold text-gray-900">
+              TrustLockd Platform Health
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Real-time platform security and trust metrics
+            </p>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">

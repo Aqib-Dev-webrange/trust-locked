@@ -6,7 +6,7 @@ export const Header = () => {
       <div className="bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] rounded-xl p-6 text-white mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-2">
+            <h1 className="text-3xl font-semibold font-poppins mb-2">
               Welcome to TrustLockd Admin
             </h1>
             <p className="text-white/90">
