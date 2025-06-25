@@ -342,7 +342,7 @@ export default function DisputesSystem() {
                 Dispute ID
               </th>
               <th className="text-left p-4 font-semibold text-gray-900">
-                Order ID
+                Order
               </th>
               <th className="text-left p-4 font-semibold text-gray-900">
                 Customer

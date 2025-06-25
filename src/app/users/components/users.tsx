@@ -169,20 +169,20 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
 }
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-sm">
+    <div className="p-4 sm:p-6 bg-white rounded-xl shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-2">
         <div>
           <h1 className="text-2xl font-medium text-gray-900">Users Management</h1>
           <p className="text-gray-600">Manage all registered users and their status</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mt-2 sm:mt-0">
           <span className="text-sm text-gray-500">{filteredUsers.length} users found</span>
-        </div> 
+        </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="flex items-center gap-4 mb-6">
+      {/* Search Bar & Filters */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
           <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
@@ -193,17 +193,19 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <FiFilter className="text-gray-400 w-5 h-5" />
-          <select
-            value={verifiedFilter}
-            onChange={(e) => setVerifiedFilter(e.target.value as 'all' | 'verified' | 'unverified')}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
-          >
-            <option value="all">All Users</option>
-            <option value="verified">Verified</option>
-            <option value="unverified">Unverified</option>
-          </select>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex items-center gap-2">
+            <FiFilter className="text-gray-400 w-5 h-5" />
+            <select
+              value={verifiedFilter}
+              onChange={(e) => setVerifiedFilter(e.target.value as 'all' | 'verified' | 'unverified')}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
+            >
+              <option value="all">All Users</option>
+              <option value="verified">Verified</option>
+              <option value="unverified">Unverified</option>
+            </select>
+          </div>
           <select
             value={documentFilter}
             onChange={(e) => setDocumentFilter(e.target.value as 'all' | 'submitted' | 'not_submitted')}
@@ -216,27 +218,27 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+      {/* Users Table (desktop/tablet) */}
+      <div className="overflow-x-auto hidden sm:block">
+        <table className="w-full border-collapse min-w-[700px]">
           <thead>
             <tr className="border-b border-gray-200">
-              <th className="text-left p-4 font-semibold text-gray-900">Full Name</th>
-              <th className="text-left p-4 font-semibold text-gray-900">Email</th>
-              <th className="text-left p-4 font-semibold text-gray-900">Date</th>
-              <th className="text-left p-4 font-semibold text-gray-900">Verified</th>
-              <th className="text-left p-4 font-semibold text-gray-900">Document</th>
-              <th className="text-left p-4 font-semibold text-gray-900">Ratings</th>
-              <th className="text-left p-4 font-semibold text-gray-900">Actions</th>
+              <th className="text-left p-2 sm:p-4 font-semibold text-gray-900">Full Name</th>
+              <th className="text-left p-2 sm:p-4 font-semibold text-gray-900">Email</th>
+              <th className="text-left p-2 sm:p-4 font-semibold text-gray-900">Date</th>
+              <th className="text-left p-2 sm:p-4 font-semibold text-gray-900">Verified</th>
+              <th className="text-left p-2 sm:p-4 font-semibold text-gray-900">Document</th>
+              <th className="text-left p-2 sm:p-4 font-semibold text-gray-900">Ratings</th>
+              <th className="text-left p-2 sm:p-4 font-semibold text-gray-900">Actions</th>
             </tr>
           </thead>
           <tbody>
             {currentUsers.map((user) => (
               <tr key={user.uid} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="p-4">{user.display_name ?? <span className="text-gray-400">N/A</span>}</td>
-                <td className="p-4">{user.email ?? <span className="text-gray-400">N/A</span>}</td>
-                <td className="p-4">{new Date(user.created_at).toLocaleDateString()}</td>
-                <td className="p-4">
+                <td className="p-2 sm:p-4">{user.display_name ?? <span className="text-gray-400">N/A</span>}</td>
+                <td className="p-2 sm:p-4">{user.email ?? <span className="text-gray-400">N/A</span>}</td>
+                <td className="p-2 sm:p-4">{new Date(user.created_at).toLocaleDateString()}</td>
+                <td className="p-2 sm:p-4">
                   {user.isConnectAccVerified ? (
                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
                       <FiCheck className="w-3 h-3" /> Verified
@@ -247,16 +249,16 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
                     </span>
                   )}
                 </td>
-                <td className="p-4">
+                <td className="p-2 sm:p-4">
                   {user.isDocumentSubmitted ? (
                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Submitted</span>
                   ) : (
                     <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Not Submitted</span>
                   )}
                 </td>
-                <td className="p-4">{user.ratings ?? <span className="text-gray-400">N/A</span>}</td>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
+                <td className="p-2 sm:p-4">{user.ratings ?? <span className="text-gray-400">N/A</span>}</td>
+                <td className="p-2 sm:p-4">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button
                       onClick={() => handleChatClick(user)}
                       className="p-2 bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] text-white rounded-lg hover:from-[#1bb5a7] hover:to-[#179a8e] transition-all duration-300"
@@ -264,13 +266,6 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
                     >
                       <FiMessageCircle className="w-4 h-4" />
                     </button>
-                    {/* <button
-                      onClick={() => handleEditUser(user)}
-                      className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                      title="Edit user"
-                    >
-                      <FiEdit className="w-4 h-4 text-gray-600" />
-                    </button> */}
                     <button
                       onClick={() => handleDeleteUser(user)}
                       className="p-2 border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors"
@@ -284,6 +279,54 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Users Card View (mobile) */}
+      <div className="block sm:hidden space-y-4">
+        {currentUsers.map((user) => (
+          <div key={user.uid} className="bg-gray-50 rounded-xl p-4 shadow border border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-semibold text-gray-900">{user.display_name ?? <span className="text-gray-400">N/A</span>}</div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleChatClick(user)}
+                  className="p-2 bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] text-white rounded-lg"
+                  title="Chat with user"
+                >
+                  <FiMessageCircle className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDeleteUser(user)}
+                  className="p-2 border border-gray-300 rounded-lg"
+                  title="Delete user"
+                >
+                  <FiTrash2 className="w-4 h-4 text-red-600" />
+                </button>
+              </div>
+            </div>
+            <div className="text-sm text-gray-600 mb-1">{user.email ?? <span className="text-gray-400">N/A</span>}</div>
+            <div className="text-xs text-gray-500 mb-2">Joined: {new Date(user.created_at).toLocaleDateString()}</div>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {user.isConnectAccVerified ? (
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                  <FiCheck className="w-3 h-3" /> Verified
+                </span>
+              ) : (
+                <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                  <FiX className="w-3 h-3" /> Not Verified
+                </span>
+              )}
+              {user.isDocumentSubmitted ? (
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Doc Submitted</span>
+              ) : (
+                <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">No Doc</span>
+              )}
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                Rating: {user.ratings ?? <span className="text-gray-400">N/A</span>}
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Edit Modal */}
@@ -419,7 +462,7 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
       )}
 
       {/* Pagination */}
-      <div className="flex items-center justify-between mt-6">
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-3">
         <div className="text-sm text-gray-500">
           Showing{" "}
           {filteredUsers.length === 0
@@ -433,18 +476,16 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
             disabled={currentPage === 1}
             className="px-4 py-2 bg-[#20d5c7] text-white rounded-lg disabled:bg-gray-300 transition-all duration-300 hover:bg-[#1bb5a7] hover:to-[#179a8e] disabled:hover:to-gray-300 disabled:hover:bg-gray-200"
           >
-            {/* add left arrow */}
             <FaChevronLeft className="mr-1" />
           </button>
           <span className="px-4 py-2 bg-[#20d5c7] text-white rounded-lg">
-            {currentPage} 
+            {currentPage}
           </span>
           <button
             onClick={handleNextPage}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-[#20d5c7] text-white rounded-lg disabled:bg-gray-300 transition-all duration-300 hover:bg-[#1bb5a7] hover:to-[#179a8e] "
+            className="px-4 py-2 bg-[#20d5c7] text-white rounded-lg disabled:bg-gray-300 transition-all duration-300 hover:bg-[#1bb5a7] hover:to-[#179a8e]"
           >
-            {/* add right arrow */}
             <FaChevronLeft className="transform rotate-180 ml-1" />
           </button>
         </div>

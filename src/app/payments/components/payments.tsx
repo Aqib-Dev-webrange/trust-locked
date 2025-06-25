@@ -203,7 +203,6 @@ export default function PaymentsSystem() {
     );
   }
 
-
   return (
     <div className="p-6 bg-white rounded-xl shadow-sm">
       {/* Header */}
@@ -315,9 +314,9 @@ export default function PaymentsSystem() {
         </div>
       </div>
 
-      {/* Payments Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+      {/* Payments Table (desktop/tablet) */}
+      <div className="overflow-x-auto hidden sm:block">
+        <table className="w-full border-collapse min-w-[700px]">
           <thead>
             <tr className="border-b border-gray-200">
               <th className="text-left p-4 font-semibold text-gray-900">
@@ -378,6 +377,55 @@ export default function PaymentsSystem() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Payments Card View (mobile) */}
+      <div className="block sm:hidden space-y-4">
+        {currentPayments.map((payment) => (
+          <div
+            key={payment.id}
+            className="bg-gray-50 rounded-xl p-4 shadow border border-gray-100"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-semibold text-[#20d5c7]">{payment.id}</div>
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                {payment.status}
+              </span>
+            </div>
+            <div className="mb-1">
+              <span className="block text-xs text-gray-500">Owner</span>
+              <span className="block font-medium text-gray-900">
+                {payment.owner.display_name}
+              </span>
+              <span className="block text-xs text-gray-600">
+                {payment.owner.email}
+              </span>
+            </div>
+            <div className="mb-1">
+              <span className="block text-xs text-gray-500">Purchaser</span>
+              <span className="block font-medium text-gray-900">
+                {payment.purchaser.display_name}
+              </span>
+              <span className="block text-xs text-gray-600">
+                {payment.purchaser.email}
+              </span>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <div>
+                <span className="block text-xs text-gray-500">Amount</span>
+                <span className="block text-green-600 font-semibold">
+                  ${payment.price.toFixed(2)}
+                </span>
+              </div>
+              <div>
+                <span className="block text-xs text-gray-500">Date</span>
+                <span className="block text-gray-600">
+                  {new Date(payment.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Pagination Controls */}
