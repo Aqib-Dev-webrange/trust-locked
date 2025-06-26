@@ -65,6 +65,11 @@ export default function DisputesSystem() {
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [resolutionNote, setResolutionNote] = useState("");
   const [chatMessage, setChatMessage] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    disputeId: number;
+    newStatus: "pending" | "resolved" | "rejected";
+  } | null>(null);
   // Chat message type definition
   type ChatMessage = {
     id: number;
@@ -102,23 +107,6 @@ export default function DisputesSystem() {
 
     return matchesSearch && matchesStatus;
   });
-
-  const handleStatusChange = (
-    disputeId: number,
-    newStatus: "pending" | "resolved" | "rejected"
-  ) => {
-    setDisputes((prev) =>
-      prev.map((dispute) =>
-        dispute.id === disputeId
-          ? {
-              ...dispute,
-              status: newStatus,
-              updated_at: new Date().toISOString(),
-            }
-          : dispute
-      )
-    );
-  };
 
   const handleViewDetails = (dispute: Dispute) => {
     setSelectedDispute(dispute);
@@ -239,6 +227,36 @@ export default function DisputesSystem() {
       </div>
     );
   }
+  const handleStatusChangeRequest = (
+    disputeId: number,
+    newStatus: "pending" | "resolved" | "rejected"
+  ) => {
+    setPendingStatusChange({ disputeId, newStatus });
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmStatusChange = () => {
+    if (pendingStatusChange) {
+      setDisputes((prev) =>
+        prev.map((dispute) =>
+          dispute.id === pendingStatusChange.disputeId
+            ? {
+                ...dispute,
+                status: pendingStatusChange.newStatus,
+                updated_at: new Date().toISOString(),
+              }
+            : dispute
+        )
+      );
+    }
+    setShowConfirmModal(false);
+    setPendingStatusChange(null);
+  };
+
+  const handleCancelStatusChange = () => {
+    setShowConfirmModal(false);
+    setPendingStatusChange(null);
+  };
 
   return (
     <div className="p-6 bg-white rounded-xl shadow-sm">
@@ -430,7 +448,7 @@ export default function DisputesSystem() {
                   <select
                     value={dispute.status}
                     onChange={(e) =>
-                      handleStatusChange(
+                      handleStatusChangeRequest(
                         dispute.id,
                         e.target.value as "pending" | "resolved" | "rejected"
                       )
@@ -679,6 +697,39 @@ export default function DisputesSystem() {
           <p className="text-gray-600">
             Try adjusting your search or filter criteria.
           </p>
+        </div>
+      )}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">
+              Confirm Status Change
+            </h2>
+            <p className="mb-6 text-gray-700">
+              Are you sure you want to change the status to{" "}
+              <span className="font-semibold text-[#20d5c7]">
+                {pendingStatusChange?.newStatus
+                  ? pendingStatusChange.newStatus.charAt(0).toUpperCase() +
+                    pendingStatusChange.newStatus.slice(1)
+                  : ""}
+              </span>
+              ?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleCancelStatusChange}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmStatusChange}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] text-white font-medium hover:from-[#1bb5a7] hover:to-[#179a8e] transition-all duration-300"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

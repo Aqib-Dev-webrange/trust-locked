@@ -22,6 +22,18 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+type ChatMessage = {
+  id: string;
+  roomId: string;
+  data: string;
+  createdBy: string;
+  createdAt: string;
+  messageType: string;
+  messageStatus: string;
+};
+
+const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   // Modal states (edit, chat, delete)
   // const [showEditModal, setShowEditModal] = useState(false);
@@ -35,9 +47,20 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
   //   email: "",
   // });
   const [chatMessage, setChatMessage] = useState("");
-  const [chatMessages, setChatMessages] = useState<{ id: number; sender: "user" | "admin"; message: string; time: string }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10; // Change this to show more/less per page
+
+  const [adminUid, setAdminUid] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.user?.id) {
+        setAdminUid(data.session.user.id);
+      }
+    };
+    getSession();
+  }, []);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -92,29 +115,55 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
   // };
 
   // Chat modal logic
-  const handleChatClick = (user: User) => {
+  const handleChatClick = async (user: User) => {
     setSelectedUser(user);
-    setChatMessages([
-      { id: 1, sender: "user", message: "Hello, I need help!", time: "10:30 AM" },
-      { id: 2, sender: "admin", message: "Hi! How can I help you?", time: "10:32 AM" },
-      { id: 3, sender: "user", message: "I have a question about my account.", time: "10:33 AM" },
-      { id: 4, sender: "admin", message: "Sure! Please go ahead.", time: "10:34 AM" },
-    ]);
+
+    // Try to find an existing room
+    let { data: room } = await supabase
+      .from("chat_rooms")
+      .select("*")
+      .or(`sellerId.eq.${user.uid},purchaserId.eq.${user.uid}`)
+      .single();
+
+    // If not found, create a new room
+    if (!room) {
+      const { data: newRoom } = await supabase
+        .from("chat_rooms")
+        .insert([
+          {
+            roomId: crypto.randomUUID(),
+            sellerId: user.uid, // or purchaserId depending on your logic
+            updatedAt: new Date().toISOString(),
+          },
+        ])
+        .select()
+        .single();
+      room = newRoom;
+    }
+
+    setSelectedRoomId(room.roomId);
+    fetchMessages(room.roomId);
     setShowChatModal(true);
   };
 
-  const handleSendMessage = () => {
-    if (chatMessage.trim()) {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: prev.length + 1,
-          sender: "admin",
-          message: chatMessage,
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+  const handleSendMessage = async () => {
+    if (!chatMessage.trim() || !selectedRoomId || !adminUid) return;
+
+    const { error } = await supabase.from("chat_messages").insert([
+      {
+        roomId: selectedRoomId,
+        data: chatMessage,
+        createdBy: adminUid,
+        createdAt: new Date().toISOString(),
+        messageType: "text",
+        messageStatus: "sent",
+      },
+    ]);
+    if (!error) {
       setChatMessage("");
+      fetchMessages(selectedRoomId);
+    } else {
+      console.error(error);
     }
   };
 
@@ -139,6 +188,34 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
 
   const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
   const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+
+  const fetchMessages = async (roomId: string) => {
+    const { data, error } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("roomId", roomId)
+      .order("createdAt", { ascending: true });
+
+    if (!error) setChatMessages(data || []);
+  };
+
+  useEffect(() => {
+    if (!selectedRoomId) return;
+    const channel = supabase
+      .channel("chat_messages")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "chat_messages", filter: `roomId=eq.${selectedRoomId}` },
+        (payload) => {
+          setChatMessages((msgs) => [...msgs, payload.new as ChatMessage]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedRoomId]);
 
   if (loading) {
   return (
@@ -392,26 +469,29 @@ const [documentFilter, setDocumentFilter] = useState<'all' | 'submitted' | 'not_
               </button>
             </div>
             <div className="flex-1 p-4 overflow-y-auto space-y-3">
-              {chatMessages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === "admin" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-xs px-3 py-2 rounded-lg ${
-                      msg.sender === "admin"
-                        ? "bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] text-white"
-                        : "bg-gray-100 text-gray-900"
-                    }`}
-                  >
-                    <div className="text-sm">{msg.message}</div>
+              {chatMessages.map((msg) => {
+                const isAdmin = msg.createdBy === adminUid;
+                return (
+                  <div key={msg.id} className={`flex ${isAdmin ? "justify-end" : "justify-start"}`}>
                     <div
-                      className={`text-xs mt-1 ${
-                        msg.sender === "admin" ? "text-white/70" : "text-gray-500"
+                      className={`max-w-xs px-3 py-2 rounded-lg ${
+                        isAdmin
+                          ? "bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] text-white"
+                          : "bg-gray-100 text-gray-900"
                       }`}
                     >
-                      {msg.time}
+                      <div className="text-sm">{msg.data}</div>
+                      <div
+                        className={`text-xs mt-1 ${
+                          isAdmin ? "text-white/70" : "text-gray-500"
+                        }`}
+                      >
+                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="p-4 border-t border-gray-200">
               <div className="flex items-center gap-2">

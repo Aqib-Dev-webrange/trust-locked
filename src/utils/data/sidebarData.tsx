@@ -44,24 +44,24 @@ export const sidebarData: SidebarDataItem[] = [
     type: "item",
     label: "User Management",
     icon: <FiUser className="w-5 h-5" />,
-    link: "/users",
+    link: "/",
   },
   {
     type: "item",
     label: "Chat with user",
     icon: <FiMessageCircle className="w-5 h-5" />,
-    link: "/chats",
+    link: "/admin/chats",
   },
   {
     type: "item",
     label: "Dispute System",
     icon: <FiAlertTriangle className="w-5 h-5" />,
-    link: "/disputes",
+    link: "/admin/disputes",
   },
   {
     type: "item",
     label: "Payments",
     icon: <FiCreditCard className="w-5 h-5" />,
-    link: "/payments",
+    link: "/admin/payments",
   },
 ];

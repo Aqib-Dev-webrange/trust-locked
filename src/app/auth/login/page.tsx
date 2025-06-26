@@ -1,38 +1,42 @@
-"use client"
-import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+"use client";
+import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<null | { message: string }>(null)
-  const router = useRouter()
-
-  interface AuthError {
-    message: string
-  }
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
 
-    const { error }: { error: AuthError | null } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      setError(error)
-    } else {
-      router.push('/')
+      if (error) {
+        toast.error(error.message || "Login failed");
+      } else {
+        toast.success("Login successful!");
+        router.push('/admin');
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message || "An unexpected error occurred");
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false)
-  }
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#20d5c7] to-[#1bb5a7]">
+    <div className="flex items-center w-full justify-center min-h-screen bg-gradient-to-br from-[#20d5c7] to-[#1bb5a7]">
       <form onSubmit={handleLogin} className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm">
         <div className="flex justify-center mb-6">
           <Image src="/images/logo.png" alt="TrustLockd Logo" width={120} height={40} priority />
@@ -57,8 +61,6 @@ export default function LoginPage() {
           required
         />
 
-        {error && <p className="text-red-600 mb-4 text-sm text-center">{error.message}</p>}
-
         <button
           type="submit"
           className="w-full bg-[#20d5c7] hover:bg-[#1bb5a7] text-white py-3 rounded-lg font-semibold transition"
@@ -68,5 +70,5 @@ export default function LoginPage() {
         </button>
       </form>
     </div>
-  )
+  );
 }
