@@ -17,3 +17,12 @@ if (!supabaseServiceRoleKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseServiceRoleKey) ;
+
+
+export async function GET() {
+  const { data, error } = await supabase
+    .from("chat_rooms")
+    .select("*");
+
+  return Response.json({ data, error });
+}

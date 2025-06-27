@@ -5,15 +5,16 @@ import {
   FiSearch,
   FiFilter,
   FiEye,
-  FiMessageCircle,
-  FiCheck,
+  // FiMessageCircle,
+  // FiCheck,
   FiX,
-  FiClock,
+  // FiClock,
   FiAlertTriangle,
   FiCalendar,
   FiDollarSign,
-  FiSend,
+  // FiSend,
 } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 // Dispute type definition
 type Dispute = {
@@ -54,32 +55,38 @@ type Dispute = {
   resolution?: string;
 };
 
+enum DisputeStatus {
+  pending = "Pending Review",
+  resolvedToBuyer = "Refunded to Buyer",
+  resolvedToSeller = "Payment Released to Seller",
+}
+
 export default function DisputesSystem() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStatus, setFilterStatus] = useState<DisputeStatus | "all">("all");
   // const [filterPriority, setFilterPriority] = useState("all");
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showChatModal, setShowChatModal] = useState(false);
+  // const [showChatModal, setShowChatModal] = useState(false);
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [resolutionNote, setResolutionNote] = useState("");
-  const [chatMessage, setChatMessage] = useState("");
+  // const [chatMessage, setChatMessage] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState<{
-    disputeId: number;
-    newStatus: "pending" | "resolved" | "rejected";
-  } | null>(null);
+  disputeId: number;
+  newStatus: "Pending Review" | "Refunded to Buyer" | "Payment Released to Seller" | "Rejected";
+} | null>(null);
   // Chat message type definition
-  type ChatMessage = {
-    id: number;
-    sender: "customer" | "admin" | "vendor";
-    message: string;
-    time: string;
-    name: string;
-  };
+  // type ChatMessage = {
+  //   id: number;
+  //   sender: "customer" | "admin" | "vendor";
+  //   message: string;
+  //   time: string;
+  //   name: string;
+  // };
 
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  // const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
     const fetchDisputes = async () => {
@@ -113,33 +120,33 @@ export default function DisputesSystem() {
     setShowDetailsModal(true);
   };
 
-  const handleOpenChat = (dispute: Dispute) => {
-    setSelectedDispute(dispute);
-    setChatMessages([
-      {
-        id: 1,
-        sender: "customer",
-        message: "I need help with my dispute",
-        time: "10:30 AM",
-        name: dispute.customer.display_name,
-      },
-      {
-        id: 2,
-        sender: "admin",
-        message: "I'm looking into your case. Can you provide more details?",
-        time: "10:32 AM",
-        name: "Admin",
-      },
-      {
-        id: 3,
-        sender: "vendor",
-        message: "We are willing to offer a full refund",
-        time: "10:35 AM",
-        name: dispute.vendor.display_name,
-      },
-    ]);
-    setShowChatModal(true);
-  };
+  // const handleOpenChat = (dispute: Dispute) => {
+  //   setSelectedDispute(dispute);
+  //   setChatMessages([
+  //     {
+  //       id: 1,
+  //       sender: "customer",
+  //       message: "I need help with my dispute",
+  //       time: "10:30 AM",
+  //       name: dispute.customer.display_name,
+  //     },
+  //     {
+  //       id: 2,
+  //       sender: "admin",
+  //       message: "I'm looking into your case. Can you provide more details?",
+  //       time: "10:32 AM",
+  //       name: "Admin",
+  //     },
+  //     {
+  //       id: 3,
+  //       sender: "vendor",
+  //       message: "We are willing to offer a full refund",
+  //       time: "10:35 AM",
+  //       name: dispute.vendor.display_name,
+  //     },
+  //   ]);
+  //   setShowChatModal(true);
+  // };
 
   const handleResolveDispute = () => {
     if (resolutionNote.trim()) {
@@ -148,7 +155,7 @@ export default function DisputesSystem() {
           selectedDispute && dispute.id === selectedDispute.id
             ? {
                 ...dispute,
-                status: "resolved",
+                status: "resolvedToBuyer", // or "resolvedToSeller" depending on your logic
                 resolution: resolutionNote,
                 updated_at: new Date().toISOString(),
               }
@@ -160,35 +167,58 @@ export default function DisputesSystem() {
     }
   };
 
-  const handleSendMessage = () => {
-    if (chatMessage.trim()) {
-      const newMessage: ChatMessage = {
-        id: chatMessages.length + 1,
-        sender: "admin",
-        message: chatMessage,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        name: "Admin",
-      };
-      setChatMessages([...chatMessages, newMessage]);
-      setChatMessage("");
-    }
-  };
+  // const handleSendMessage = () => {
+  //   if (chatMessage.trim()) {
+  //     const newMessage: ChatMessage = {
+  //       id: chatMessages.length + 1,
+  //       sender: "admin",
+  //       message: chatMessage,
+  //       time: new Date().toLocaleTimeString([], {
+  //         hour: "2-digit",
+  //         minute: "2-digit",
+  //       }),
+  //       name: "Admin",
+  //     };
+  //     setChatMessages([...chatMessages, newMessage]);
+  //     setChatMessage("");
+  //   }
+  // };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "pending":
+      case DisputeStatus.pending:
         return "bg-yellow-100 text-yellow-800";
-      case "resolved":
+      case DisputeStatus.resolvedToBuyer:
         return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
+      case DisputeStatus.resolvedToSeller:
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+      case "pending":
+        return DisputeStatus.pending;
+      case "resolvedToBuyer":
+        return DisputeStatus.resolvedToBuyer;
+      case "resolvedToSeller":
+        return DisputeStatus.resolvedToSeller;
+      case "rejected":
+        return "Rejected";
+      default:
+        return status;
+    }
+  };
+
+  // const getBackendStatus = (displayStatus: string) => {
+  //   if (displayStatus === DisputeStatus.pending) return "Pending Review";
+  //   if (displayStatus === DisputeStatus.resolvedToBuyer) return "Refunded to Buyer";
+  //   if (displayStatus === DisputeStatus.resolvedToSeller) return "Payment Released to Seller";
+  //   if (displayStatus === "Rejected") return "Rejected";
+  //   return "Pending Review";
+  // };
 
   // const getPriorityColor = (priority: string) => {
   //   switch (priority) {
@@ -208,7 +238,7 @@ export default function DisputesSystem() {
           viewBox="0 0 24 24"
         >
           <circle
-            className="opacity-25"
+            className="opacity-50"
             cx="12"
             cy="12"
             r="10"
@@ -224,30 +254,45 @@ export default function DisputesSystem() {
         <span className="text-[#20d5c7] text-lg font-medium animate-pulse">
           Processing ..
         </span>
-      </div>
+        </div>
     );
   }
   const handleStatusChangeRequest = (
     disputeId: number,
-    newStatus: "pending" | "resolved" | "rejected"
+    newStatus: "Pending Review" | "Refunded to Buyer" | "Payment Released to Seller" | "Rejected"
   ) => {
     setPendingStatusChange({ disputeId, newStatus });
     setShowConfirmModal(true);
   };
 
-  const handleConfirmStatusChange = () => {
+  const handleConfirmStatusChange = async () => {
     if (pendingStatusChange) {
-      setDisputes((prev) =>
-        prev.map((dispute) =>
-          dispute.id === pendingStatusChange.disputeId
-            ? {
-                ...dispute,
-                status: pendingStatusChange.newStatus,
-                updated_at: new Date().toISOString(),
-              }
-            : dispute
-        )
-      );
+      const { error } = await supabase
+        .from("disputes")
+        .update({
+          status: pendingStatusChange.newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", pendingStatusChange.disputeId)
+        .select();
+
+      if (!error) {
+        setDisputes((prev) =>
+          prev.map((dispute) =>
+            dispute.id === pendingStatusChange.disputeId
+              ? {
+                  ...dispute,
+                  status: pendingStatusChange.newStatus,
+                  updated_at: new Date().toISOString(),
+                }
+              : dispute
+          )
+        );
+        toast.success("Status changed successfully!");
+      } else {
+        console.error("Failed to update status:", error.message);
+        toast.error("Failed to change status.");
+      }
     }
     setShowConfirmModal(false);
     setPendingStatusChange(null);
@@ -274,7 +319,7 @@ export default function DisputesSystem() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
           <div className="flex items-center gap-3">
             <FiClock className="w-8 h-8 text-yellow-600" />
@@ -285,21 +330,21 @@ export default function DisputesSystem() {
               <div className="text-sm text-yellow-600">Pending</div>
             </div>
           </div>
-        </div>
+        </div> */}
 
-        <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+        {/* <div className="bg-green-50 p-4 rounded-lg border border-green-200">
           <div className="flex items-center gap-3">
             <FiCheck className="w-8 h-8 text-green-600" />
             <div>
               <div className="text-2xl font-bold text-green-800">
-                {disputes.filter((d) => d.status === "resolved").length}
+                {disputes.filter((d) => d.status === "resolvedToBuyer" || d.status === "resolvedToSeller").length}
               </div>
               <div className="text-sm text-green-600">Resolved</div>
             </div>
           </div>
-        </div>
+        </div> */}
         {/* rejected */}
-        <div className="bg-red-50 p-4 rounded-lg border border-red-200 ">
+        {/* <div className="bg-red-50 p-4 rounded-lg border border-red-200 ">
           <div className="flex items-center gap-3">
             <FiAlertTriangle className="w-8 h-8 text-red-600" />
             <div>
@@ -310,7 +355,7 @@ export default function DisputesSystem() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Search and Filter Bar */}
       <div className="flex items-center gap-4 mb-6">
@@ -329,13 +374,13 @@ export default function DisputesSystem() {
           <FiFilter className="text-gray-400 w-5 h-5" />
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => setFilterStatus(e.target.value as DisputeStatus | "all")}
             className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#20d5c7] focus:border-transparent outline-none"
           >
             <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="resolved">Resolved</option>
-            <option value="rejected">Rejected</option>
+            <option value={DisputeStatus.pending}>{DisputeStatus.pending}</option>
+            <option value={DisputeStatus.resolvedToBuyer}>{DisputeStatus.resolvedToBuyer}</option>
+            <option value={DisputeStatus.resolvedToSeller}>{DisputeStatus.resolvedToSeller}</option>
           </select>
         </div>
 
@@ -446,20 +491,21 @@ export default function DisputesSystem() {
                 {/* Status */}
                 <td className="p-4">
                   <select
-                    value={dispute.status}
-                    onChange={(e) =>
+                    value={getStatusDisplay(dispute.status)}
+                    onChange={(e) => {
                       handleStatusChangeRequest(
                         dispute.id,
-                        e.target.value as "pending" | "resolved" | "rejected"
-                      )
-                    }
+                        e.target.value as "Pending Review" | "Refunded to Buyer" | "Payment Released to Seller" | "Rejected"
+                      );
+                    }}
                     className={`px-3 py-1 rounded-full text-sm font-medium border-0 outline-none cursor-pointer ${getStatusColor(
                       dispute.status
                     )}`}
                   >
-                    <option value="pending">Pending</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="rejected">Rejected</option>
+                    <option value={DisputeStatus.pending}>{DisputeStatus.pending}</option>
+                    <option value={DisputeStatus.resolvedToBuyer}>{DisputeStatus.resolvedToBuyer}</option>
+                    <option value={DisputeStatus.resolvedToSeller}>{DisputeStatus.resolvedToSeller}</option>
+                    <option value="Rejected">Rejected</option>
                   </select>
                 </td>
 
@@ -490,13 +536,13 @@ export default function DisputesSystem() {
                       <FiEye className="w-4 h-4" />
                     </button>
 
-                    <button
+                    {/* <button
                       onClick={() => handleOpenChat(dispute)}
                       className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                       title="Open Chat"
                     >
                       <FiMessageCircle className="w-4 h-4 text-gray-600" />
-                    </button>
+                    </button> */}
                   </div>
                 </td>
               </tr>
@@ -575,7 +621,7 @@ export default function DisputesSystem() {
               </div> */}
 
               {/* Resolution */}
-              {selectedDispute.status === "resolved" ? (
+              {(selectedDispute.status === "resolvedToBuyer" || selectedDispute.status === "resolvedToSeller") ? (
                 <div>
                   <label className="text-sm font-medium text-gray-700">
                     Resolution
@@ -609,7 +655,7 @@ export default function DisputesSystem() {
         </div>
       )}
 
-      {/* Chat Modal */}
+      {/* Chat Modal
       {showChatModal && selectedDispute && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl w-full max-w-lg h-96 flex flex-col">
@@ -683,7 +729,7 @@ export default function DisputesSystem() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Empty State */}
       {filteredDisputes.length === 0 && (
@@ -699,6 +745,7 @@ export default function DisputesSystem() {
           </p>
         </div>
       )}
+      
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-sm">
@@ -709,8 +756,7 @@ export default function DisputesSystem() {
               Are you sure you want to change the status to{" "}
               <span className="font-semibold text-[#20d5c7]">
                 {pendingStatusChange?.newStatus
-                  ? pendingStatusChange.newStatus.charAt(0).toUpperCase() +
-                    pendingStatusChange.newStatus.slice(1)
+                  ? getStatusDisplay(pendingStatusChange.newStatus)
                   : ""}
               </span>
               ?
@@ -724,7 +770,7 @@ export default function DisputesSystem() {
               </button>
               <button
                 onClick={handleConfirmStatusChange}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] text-white font-medium hover:from-[#1bb5a7] hover:to-[#179a8e] transition-all duration-300"
+                className="px-4 py-2 bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] text-white rounded-lg hover:from-[#1bb5a7] hover:to-[#179a8e] transition-all duration-300"
               >
                 Confirm
               </button>

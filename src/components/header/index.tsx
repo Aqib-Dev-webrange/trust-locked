@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { FiUser, FiShield, FiLogOut } from "react-icons/fi";
+import { FiUser, 
+  // FiShield, 
+  FiLogOut } from "react-icons/fi";
 
 export const Header = () => {
   const adminName = "Aqib ";
-  const adminRole = "Super Admin";
+  // const adminRole = "Super Admin";
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
 
@@ -30,23 +32,23 @@ export const Header = () => {
 
   return (
     <header className="p-4 pb-0">
-      <div className="bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] rounded-xl p-6 text-white mb-6">
+      <div className="bg-gradient-to-r from-[#20d5c7] to-[#1bb5a7] rounded-xl p-6 text-white ">
         <div className="flex items-center justify-between">
           {/* Left: Title and subtitle */}
           <div className="hidden md:block">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                <span className="text-[#20d5c7] font-bold text-lg">TL</span>
+            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                <span className="text-[#20d5c7] font-bold text-md">TL</span>
               </div>
             </div>
           </div>
           <div className="flex-1 text-center md:text-center">
-            <h1 className="text-3xl font-semibold text-center font-poppins mb-2 gap-2">
+            <h1 className="text-3xl font-semibold text-center font-poppins  gap-2">
               Welcome to TrustLockd Admin
             </h1>
-            <p className="text-white/90">
+            {/* <p className="text-white/90">
               Monitor and manage your multi-vendor platform with confidence
-            </p>
+            </p> */}
           </div>
           {/* Right: Admin info and logout */}
           <div className="lg:flex items-center gap-4 mt-3 sm:mt-0 hidden md:block">
@@ -55,10 +57,10 @@ export const Header = () => {
                 <FiUser className="w-5 h-5 text-white/80" />
                 {adminName}
               </div>
-              <div className="flex gap-1 text-xs text-white/80">
+              {/* <div className="flex gap-1 text-xs text-white/80">
                 <FiShield className="w-5 h-5" />
                 {adminRole}
-              </div>
+              </div> */}
             </div>
             <button
               onClick={() => setShowLogoutModal(true)}
